@@ -27,7 +27,7 @@ AR = ar -rc
 
 # -- Flags ----------
 C_DEBUG_FLAGS = -O0
-C_CC_FLAGS = -std=c99 -DNOALIAS -DALIGNED
+C_CC_FLAGS = -std=c99 -DNOALIAS -DALIGNED -msse4.2 -fno-tree-vectorize
 C_OPTIMISATION_FLAGS = -O3 -fstrict-aliasing
 
 C_OS_FLAGS = -D$(OS)

@@ -27,9 +27,8 @@ AR = ar -rc
 
 # -- Flags ----------
 C_DEBUG_FLAGS = -O0
-C_CC_FLAGS = -std=c99 -DNOALIAS -DALIGNED
-C_OPTIMISATION_FLAGS = -O3 -fstrict-aliasing -DOPENMP -fopenmp #-fopenmp-report=2 #-par-report2 -no-vec
-C_ARCH_FLAGS = -msse4.2
+C_CC_FLAGS = -std=c99 -DNOALIAS -DALIGNED -msse4.2 
+C_OPTIMISATION_FLAGS = -O3 -fstrict-aliasing
 
 C_OS_FLAGS = -D$(OS)
 C_CONFIG_FLAGS = -D$(CONFIG)
@@ -40,7 +39,7 @@ CFLAGS = $(C_CC_FLAGS) $(C_OPTIMISATION_FLAGS) $(C_ARCH_FLAGS) $(C_OS_FLAGS) $(C
 LDFLAGS = $(C_CC_FLAGS) $(C_OPTIMISATION_FLAGS) $(C_ARCH_FLAGS) $(C_OS_FLAGS) $(C_CONFIG_FLAGS) $(C_INC_FLAGS) $(LIB_LIB_PATH)
 
 # -- Final product ----------
-PRODUCT   = tp_SSE_OMP_vec.exe
+PRODUCT   = tp_SSE_vec.exe
 
 # -- src and obj List ----------
 SRC = $(addprefix ${SRC_PATH}/, $(FILE))
