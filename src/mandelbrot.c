@@ -29,9 +29,10 @@
 // --------------------------------------------------
 int mandelbrot_scalar(float a, float b, int max_iter)
 // --------------------------------------------------
-{
-    
-    // conseil: afficher le contenu des variables dans la boucles *et* valider via excel
+{// conseil: afficher le contenu des variables dans la boucles *et* valider via excel
+
+// COMPARER LES DEUX METHODES POUR VOIR LA PLUS EFFICACE
+// WE HAVE TO COMPARE TO SEE THE MOST EFFICIENT APPROACH /* 
     
     int iter = 0;
 	     
@@ -47,6 +48,23 @@ int mandelbrot_scalar(float a, float b, int max_iter)
 	 }
         
     return iter;
+*/
+ float aa =a; 
+    float bb = b; 
+    int iter = 0;
+    float xn = 0.0; 
+    float yn = 0.0;
+    float xn1, yn1, zn;
+	do{
+		xn1 = xn*xn - yn*yn + aa;
+		yn1 = 2*xn*yn + bb;
+		zn = (xn1*xn1 + yn1*yn1);
+		xn = xn1; 
+		yn = yn1;
+		iter++;		
+	}while((iter < max_iter) && (zn<=4.0));
+
+   	return iter;
 }
 // ------------------------------
 void test_mandelbrot_scalar(void)
@@ -68,9 +86,28 @@ void test_mandelbrot_scalar(void)
 vuint32 mandelbrot_SIMD_F32(vfloat32 a, vfloat32 b, int max_iter)
 // --------------------------------------------------------------
 {
+	vuint32 iter = _mm_set1_epi32(0);
+	vuint32 incr = _mm_set1_epi32(1);
+	//vfloat32 compar = _mm_set_ps(4.0);
+	
     // version avec test de sortie en float
+    vfloat32 aa = a; 
+    vfloat32 bb= b;
+    vfloat32 xn = _mm_setzero_ps();
+    vfloat32 yn = _mm_setzero_ps();
+    vfloat32 mult2 = _mm_set_ps1(2.0); // sert a la multiplication par deux
+    vfloat32 xn1, yn1, zn;
+    vfloat32 res;
+    xn1 =  _mm_add_ps(_mm_sub_ps (_mm_mul_ps(xn, xn), _mm_mul_ps(yn, yn)), aa);
+    yn1 = _mm_add_ps(_mm_mul_ps(xn, _mm_mul_ps(xn, mult2)), bb);
+    zn = _mm_add_ps (_mm_mul_ps(xn, xn), _mm_mul_ps(yn, yn));
+    xn = xn1; 
+    yn = yn1;
+    //
+	//res = _mm_cmple_ps(zn, compar);
     
-    vuint32 iter = _mm_set1_epi32(0);
+    // incrementation
+	iter = _mm_add_epi32(incr, iter);
     
     // COMPLETER ICI
     
@@ -133,9 +170,10 @@ void calc_mandelbrot_scalar(uint32 **M, int h, int w, float a0, float a1, float 
     da = (a1-a0)/w;
     db = (b1-b0)/h;
     
+// OPENMP 
 #ifdef OPENMP
-// COMPLETER ICI
-#endif   
+#pragma omp parallel for private(a,b,iter) schedule(static, 20)// schedule(dynamique, 5)
+#endif    
     
     for(i=0; i<h; i++) {
         for(j=0; j<w; j++) {
