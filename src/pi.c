@@ -62,17 +62,13 @@ double integrale(int64 n)
 	
 	int chunk = n / 16;
 	
+
+	#pragma omp parallel for schedule(static) reduction(+:s)		
 	
-//#pragma omp parallel shared(s)
-	{
-//#pragma omp for schedule(dynamic) nowait
-		#pragma omp parallel for schedule(static) reduction(+:s)		
+	for(int k = 0; k < n; ++k) {
+		double kn = k/((double) n);
+		s += inv/(1+sqr(kn));
 		
-		for(int k = 0; k < n; ++k) {
-			double kn = k/((double) n);
-			s += inv/(1+sqr(kn));
-			
-		}
 	}
 	p = s * 4;
     // COMPLETER ICI
@@ -89,20 +85,15 @@ double arctan1(int64 n)
 	 double addVal;
 	 int chunk = n / 16;
 	 
-	 {
 		 
 #pragma omp parallel for schedule(static) reduction(+:sum)		
-		for(int k = 1; k < n+1; ++k)
-		{
-			double flip = (k & 1)*-2 + 1;
-			//printf("s = %f",s);
-			addVal = 1 + k*2;
-			sum += 1/(flip*addVal);
-		}
-	 }
-	 
-	 printf("1/4 pi = %f",sum);
-	 
+	for(int k = 1; k < n+1; ++k)
+	{
+		double flip = (k & 1)*-2 + 1;
+		//printf("s = %f",s);
+		addVal = 1 + k*2;
+		sum += 1/(flip*addVal);
+	}	 
     
     // COMPLETER ICI
     
