@@ -40,7 +40,7 @@ int mandelbrot_scalar(float a, float b, int max_iter)
 	 float x,y,z,yNew;
 	 x = y = z = 0;
 	 
-	 for(iter = 0;iter < max_iter && sqrt(x*x + y*y) <= 2 ; ++iter) {
+	 for(iter = 0;iter < max_iter && x*x + y*y <= 4 ; ++iter) {
 		 yNew = 2*x*y+b;
 		 x = x*x - y*y + a;
 		 y = yNew;
@@ -71,7 +71,28 @@ vuint32 mandelbrot_SIMD_F32(vfloat32 a, vfloat32 b, int max_iter)
     // version avec test de sortie en float
     
     vuint32 iter = _mm_set1_epi32(0);
-    
+	 vfloat32 inc = _mm_set1_ps(1);
+	 vfloat32 deux = _mm_set1_ps(2);
+	 vfloat32 lim = _mm_set1_ps(4);
+	 
+	 vfloat32 x,y,yNew,z;
+	 x = y = yNew = z = _mm_set1_ps(0);
+		 
+	 
+	 for(int i = 0; i < max_iter; ++i) {
+		 yNew = _mm_add_ps(_mm_mul_ps(deux, _mm_mul_ps(x,y)),b);
+		 x = _mm_add_ps(_mm_sub_ps(_mm_mul_ps(x,x), _mm_mul_ps(y,y)),a);
+		 
+		 y = yNew;
+		 
+		 z = _mm_add_ps(_mm_mul_ps(x,x),_mm_mul_ps(y,y));
+		 
+		 //checks if values in z are <= values in lim. If a val is greater, the result in the resulting vec is 0.
+		 //else, it's 0xfffff... something. the _mm_and_ps sets the increment for iter to either 1 or 0. then it converts the 
+		 //vfloat32 vector into a vuint32 vec.
+		 vuint32 add = _mm_cvtps_epi32(_mm_and_ps(_mm_cmple_ps(z,lim), inc));
+		 iter = _mm_add_epi32(add, iter);
+	 }
     // COMPLETER ICI
     
     return iter;
@@ -134,7 +155,7 @@ void calc_mandelbrot_scalar(uint32 **M, int h, int w, float a0, float a1, float 
     db = (b1-b0)/h;
     
 #ifdef OPENMP
-// COMPLETER ICI
+	 #pragma omp parallel for schedule(static) private(a,b,iter) shared(M)	
 #endif   
     
     for(i=0; i<h; i++) {
@@ -166,7 +187,7 @@ void calc_mandelbrot_SIMD_F32(vuint32 **M, int h, int w, float a0, float a1, flo
     
 
 #ifdef OPENMP
-    // COMPLETER ICI
+	 #pragma omp parallel for schedule(static) private(a,b,iter) shared(M)	
 #endif   
 
     for(i=0; i<h; i++) {
@@ -199,7 +220,7 @@ void calc_mandelbrot_SIMD_I32(vuint32 **M, int h, int w, float a0, float a1, flo
     db = (b1-b0)/h;
 
 #ifdef OPENMP
-    // COMPLETER ICI
+	 #pragma omp parallel for schedule(static) private(a,b,iter) shared(M)	
 #endif   
 
     for(i=0; i<h; i++) {
