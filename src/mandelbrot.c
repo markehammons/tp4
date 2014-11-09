@@ -29,9 +29,10 @@
 // --------------------------------------------------
 int mandelbrot_scalar(float a, float b, int max_iter)
 // --------------------------------------------------
-{
-    
-    // conseil: afficher le contenu des variables dans la boucles *et* valider via excel
+{// conseil: afficher le contenu des variables dans la boucles *et* valider via excel
+
+// COMPARER LES DEUX METHODES POUR VOIR LA PLUS EFFICACE
+// WE HAVE TO COMPARE TO SEE THE MOST EFFICIENT APPROACH /* 
     
     int iter = 0;
 	     
@@ -47,6 +48,23 @@ int mandelbrot_scalar(float a, float b, int max_iter)
 	 }
         
     return iter;
+*/
+ float aa =a; 
+    float bb = b; 
+    int iter = 0;
+    float xn = 0.0; 
+    float yn = 0.0;
+    float xn1, yn1, zn;
+	do{
+		xn1 = xn*xn - yn*yn + aa;
+		yn1 = 2*xn*yn + bb;
+		zn = (xn1*xn1 + yn1*yn1);
+		xn = xn1; 
+		yn = yn1;
+		iter++;		
+	}while((iter < max_iter) && (zn<=4.0));
+
+   	return iter;
 }
 // ------------------------------
 void test_mandelbrot_scalar(void)
@@ -154,9 +172,10 @@ void calc_mandelbrot_scalar(uint32 **M, int h, int w, float a0, float a1, float 
     da = (a1-a0)/w;
     db = (b1-b0)/h;
     
+// OPENMP 
 #ifdef OPENMP
-	 #pragma omp parallel for schedule(static) private(a,b,iter) shared(M)	
-#endif   
+#pragma omp parallel for private(a,b,iter) schedule(static, 20)// schedule(dynamique, 5)
+#endif    
     
     for(i=0; i<h; i++) {
         for(j=0; j<w; j++) {
