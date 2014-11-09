@@ -25,6 +25,7 @@
 #include "mymacro.h"
 
 #include <x86intrin.h>  // si compilateur Intel
+#define lte(x,y) _mm_or_si128(_mm_cmpeq_epi32(x,y),_mm_cmplt_epi32(x,y))
 
 // --------------------------------------------------
 int mandelbrot_scalar(float a, float b, int max_iter)
@@ -110,6 +111,7 @@ vuint32 mandelbrot_SIMD_F32(vfloat32 a, vfloat32 b, int max_iter)
 		 //checks if values in z are <= values in lim. If a val is greater, the result in the resulting vec is 0.
 		 //else, it's 0xfffff... something. the _mm_and_ps sets the increment for iter to either 1 or 0. then it converts the 
 		 //vfloat32 vector into a vuint32 vec.
+		 
 		 vuint32 add = _mm_cvtps_epi32(_mm_and_ps(_mm_cmple_ps(z,lim), inc));
 		 iter = _mm_add_epi32(add, iter);
 		 
@@ -126,6 +128,44 @@ vuint32 mandelbrot_SIMD_I32(vfloat32 a, vfloat32 b, int max_iter)
     // version avec test de sortie en int
     
     vuint32 iter = _mm_set1_epi32(0);
+	 
+	 vfloat32 shifter = _mm_set1_ps(pow(2,29));
+	 vuint32 inc = _mm_set1_epi32(1);
+	 vuint32 deux = _mm_set1_epi32(2);
+	 
+	 
+	 
+	 vuint32 ai,bi;
+	 vuint32 lim = _mm_cvtps_epi32(_mm_mul_ps(_mm_set1_ps(4),shifter));
+	 vuint32 ones = _mm_set1_epi32(1);
+	 vuint32 add;
+	 
+	 
+	 ai = _mm_cvtps_epi32(_mm_mul_ps(a,shifter));
+	 bi = _mm_cvtps_epi32(_mm_mul_ps(b,shifter));
+	 
+	 uint16 incomplete = 0xffff;
+	 vuint32 x,y,yNew,z;
+	 x = y = yNew = z = _mm_set1_epi32(0);
+	 
+	 for(int i = 0; i < max_iter && incomplete != 0; ++i) {
+		 yNew = _mm_add_epi32(_mm_mul_epi32(deux, _mm_mul_epi32(x,y)),bi);
+		 x = _mm_add_epi32(_mm_sub_epi32(_mm_mul_epi32(x,x), _mm_mul_epi32(y,y)),ai);
+		 
+		 y = yNew;
+		 
+		 z = _mm_add_epi32(_mm_mul_epi32(x,x),_mm_mul_epi32(y,y));
+		 
+		 //checks if values in z are <= values in lim. If a val is greater, the result in the resulting vec is 0.
+		 //else, it's 0xfffff... something. the _mm_and_ps sets the increment for iter to either 1 or 0. then it converts the 
+		 //vfloat32 vector into a vuint32 vec.
+		 add = _mm_and_si128(lte(z,lim), inc);
+		 iter = _mm_add_epi32(add, iter);
+		 
+		 incomplete = _mm_movemask_epi8((vuint32)_mm_cmpeq_epi32(add, ones)); // extract results of comparison
+	 }
+	 
+	 
     
     return iter;
 }
