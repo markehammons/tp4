@@ -33,7 +33,7 @@ int mandelbrot_scalar(float a, float b, int max_iter)
 
 // COMPARER LES DEUX METHODES POUR VOIR LA PLUS EFFICACE
 // WE HAVE TO COMPARE TO SEE THE MOST EFFICIENT APPROACH /* 
-    
+ /*   
     int iter = 0;
 	     
     // COMPLETER ICI
@@ -92,12 +92,14 @@ vuint32 mandelbrot_SIMD_F32(vfloat32 a, vfloat32 b, int max_iter)
 	 vfloat32 inc = _mm_set1_ps(1);
 	 vfloat32 deux = _mm_set1_ps(2);
 	 vfloat32 lim = _mm_set1_ps(4);
+	 vuint32 ones = _mm_set1_epi32(1);
 	 
 	 vfloat32 x,y,yNew,z;
 	 x = y = yNew = z = _mm_set1_ps(0);
+	 uint16 incomplete = 0xffff;
 		 
-	 
-	 for(int i = 0; i < max_iter; ++i) {
+	 //if incomplete == 0, then we're no longer incrementing iter, and can halt looping early
+	 for(int i = 0; i < max_iter && incomplete != 0; ++i) {
 		 yNew = _mm_add_ps(_mm_mul_ps(deux, _mm_mul_ps(x,y)),b);
 		 x = _mm_add_ps(_mm_sub_ps(_mm_mul_ps(x,x), _mm_mul_ps(y,y)),a);
 		 
@@ -110,6 +112,8 @@ vuint32 mandelbrot_SIMD_F32(vfloat32 a, vfloat32 b, int max_iter)
 		 //vfloat32 vector into a vuint32 vec.
 		 vuint32 add = _mm_cvtps_epi32(_mm_and_ps(_mm_cmple_ps(z,lim), inc));
 		 iter = _mm_add_epi32(add, iter);
+		 
+		 incomplete = _mm_movemask_epi8((vuint32)_mm_cmpeq_epi32(add, ones)); // extract results of comparison
 	 }
     // COMPLETER ICI
     
