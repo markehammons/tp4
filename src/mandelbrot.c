@@ -101,19 +101,20 @@ vuint32 mandelbrot_SIMD_F32(vfloat32 a, vfloat32 b, int max_iter)
 		 
 	 //if incomplete == 0, then we're no longer incrementing iter, and can halt looping early
 	 for(int i = 0; i < max_iter && incomplete != 0; ++i) {
+		 vuint32 add = _mm_cvtps_epi32(_mm_and_ps(_mm_cmple_ps(z,lim), inc));
+		 iter = _mm_add_epi32(add, iter);
+		 
 		 yNew = _mm_add_ps(_mm_mul_ps(deux, _mm_mul_ps(x,y)),b);
 		 x = _mm_add_ps(_mm_sub_ps(_mm_mul_ps(x,x), _mm_mul_ps(y,y)),a);
 		 
 		 y = yNew;
-		 
+		 		 	 
 		 z = _mm_add_ps(_mm_mul_ps(x,x),_mm_mul_ps(y,y));
 		 
 		 //checks if values in z are <= values in lim. If a val is greater, the result in the resulting vec is 0.
 		 //else, it's 0xfffff... something. the _mm_and_ps sets the increment for iter to either 1 or 0. then it converts the 
 		 //vfloat32 vector into a vuint32 vec.
 		 
-		 vuint32 add = _mm_cvtps_epi32(_mm_and_ps(_mm_cmple_ps(z,lim), inc));
-		 iter = _mm_add_epi32(add, iter);
 		 
 		 incomplete = _mm_movemask_epi8((vuint32)_mm_cmpeq_epi32(add, ones)); // extract results of comparison
 	 }
@@ -129,7 +130,9 @@ vuint32 mandelbrot_SIMD_I32(vfloat32 a, vfloat32 b, int max_iter)
     
     vuint32 iter = _mm_set1_epi32(0);
 	 
-	 vfloat32 shifter = _mm_set1_ps(pow(2,29));
+	 int shift = 27;
+	 
+	 vfloat32 shifter = _mm_set1_ps(pow(2,shift));
 	 vuint32 inc = _mm_set1_epi32(1);
 	 vuint32 deux = _mm_set1_epi32(2);
 	 
@@ -144,24 +147,48 @@ vuint32 mandelbrot_SIMD_I32(vfloat32 a, vfloat32 b, int max_iter)
 	 ai = _mm_cvtps_epi32(_mm_mul_ps(a,shifter));
 	 bi = _mm_cvtps_epi32(_mm_mul_ps(b,shifter));
 	 
+	 display_vuint32(ai, "%10d ", "ai");puts("");
+	 display_vuint32(bi, "%10d ", "bi");puts("");
+	 
+	 
+	 
 	 uint16 incomplete = 0xffff;
 	 vuint32 x,y,yNew,z;
 	 x = y = yNew = z = _mm_set1_epi32(0);
 	 
 	 for(int i = 0; i < max_iter && incomplete != 0; ++i) {
-		 yNew = _mm_add_epi32(_mm_mul_epi32(deux, _mm_mul_epi32(x,y)),bi);
-		 x = _mm_add_epi32(_mm_sub_epi32(_mm_mul_epi32(x,x), _mm_mul_epi32(y,y)),ai);
+		 vuint32 lt = _mm_cmplt_epi32(z,lim);
+		 vuint32 eq = _mm_cmpeq_epi32(z,lim);
+		 vuint32 gt = _mm_cmpgt_epi32(z,lim);
+		 add = _mm_and_si128(lte(z,lim), inc);
+		 inc = add;
+		 iter = _mm_add_epi32(add, iter);
+		 vuint32 x_14 = _mm_srai_epi32(x,(shift+1)/2);
+		 vuint32 y_14 = _mm_srai_epi32(y,(shift+1)/2);
+		 
+		 yNew = _mm_add_epi32(_mm_mul_epi32(deux, _mm_mul_epi32(x_14,y_14)),bi);
+		 x = _mm_add_epi32(_mm_sub_epi32(_mm_mul_epi32(x_14,x_14), _mm_mul_epi32(y_14,y_14)),ai);
 		 
 		 y = yNew;
 		 
-		 z = _mm_add_epi32(_mm_mul_epi32(x,x),_mm_mul_epi32(y,y));
+		 x_14 = _mm_srai_epi32(x,(shift+1)/2);
+		 y_14 = _mm_srai_epi32(y,(shift+1)/2);
+		 
+		 display_vuint32(x_14, "%10d ", "x_14");puts("");
+		 display_vuint32(y_14, "%10d ", "y_14");puts("");
+		 
+		 
+		 
+		 //display_vuint32(_mm_mul_epi32(x_14,x_14), "%10d ", "x_14^2");puts("");
+		 //display_vuint32(_mm_mul_epi32(y_14,y_14), "%10d ", "y_14^2");puts("");
+		 
+		 
+		 z = _mm_add_epi32(_mm_mul_epi32(x_14,x_14),_mm_mul_epi32(y_14,y_14));
 		 
 		 //checks if values in z are <= values in lim. If a val is greater, the result in the resulting vec is 0.
 		 //else, it's 0xfffff... something. the _mm_and_ps sets the increment for iter to either 1 or 0. then it converts the 
-		 //vfloat32 vector into a vuint32 vec.
-		 add = _mm_and_si128(lte(z,lim), inc);
-		 iter = _mm_add_epi32(add, iter);
-		 
+		 //vfloat32 vector into a vuint32 vec.#
+		 		 
 		 incomplete = _mm_movemask_epi8((vuint32)_mm_cmpeq_epi32(add, ones)); // extract results of comparison
 	 }
 	 

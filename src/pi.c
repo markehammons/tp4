@@ -58,14 +58,11 @@ double integrale(int64 n)
 	//printf("n = %d", n);
 
 	double s = 0.0d;
-	double inv = 1/((double) n);
-	
-	int chunk = n / 16;
-	
+	double inv = 1/((double) n);	
 
 	#pragma omp parallel for schedule(static) reduction(+:s)		
 	
-	for(int k = 0; k < n; ++k) {
+	for(int64 k = 0; k < n; ++k) {
 		double kn = k/((double) n);
 		s += inv/(1+sqr(kn));
 		
