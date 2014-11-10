@@ -22,10 +22,11 @@
 #include "pi.h"
 
 // ------------
-void info(void)
+void info(int cores)
 // ------------
 {
     int p;
+	 
 
 #ifdef ENABLE_BENCHMARK
     puts("mode Benchmark ON");
@@ -37,11 +38,12 @@ void info(void)
     
     #ifdef OPENMP
     puts("OpenMP ON");
-    puts("adaptez p a votre machine !");
+    printf("En mode %d coeurs!", cores);
+	 puts("adaptez p a votre machine !");
     p = 1;
     //p = 8;
     p = 16;
-    omp_set_num_threads(p);
+    omp_set_num_threads(cores);
 #endif
 
 }
@@ -49,8 +51,17 @@ void info(void)
 int main(int argc, char *argv[])
 // -----------------------------
 {
-    info();
+#ifdef OPENMP
+	for(int cores = 8; cores < 32; cores*=2) {
+    info(cores);
+#else
+	 info(8);
+#endif
     main_mandelbrot(argc, argv);
     main_pi(argc, argv);
+#ifdef OPENMP
+	}
+#endif
+
     return 0;   
 }

@@ -14,6 +14,11 @@
 #include <omp.h>
 #endif
 
+#ifndef TYPE
+#define TYPE static
+#define BSIZE 20
+#endif
+
 #include "def.h"
 #include "nrutil.h"
 
@@ -209,7 +214,7 @@ void calc_mandelbrot_scalar(uint32 **M, int h, int w, float a0, float a1, float 
     
 // OPENMP 
 #ifdef OPENMP
-#pragma omp parallel for private(a,b,iter) schedule(static, 20)// schedule(dynamique, 5)
+#pragma omp parallel for private(a,b,iter) schedule(TYPE, BSIZE)// schedule(dynamique, 5)
 #endif    
     
     for(i=0; i<h; i++) {
@@ -241,7 +246,7 @@ void calc_mandelbrot_SIMD_F32(vuint32 **M, int h, int w, float a0, float a1, flo
     
 
 #ifdef OPENMP
-	 #pragma omp parallel for schedule(static) private(a,b,iter) shared(M)	
+	 #pragma omp parallel for schedule(TYPE,BSIZE) private(a,b,iter) shared(M)	
 #endif   
 
     for(i=0; i<h; i++) {
@@ -274,7 +279,7 @@ void calc_mandelbrot_SIMD_I32(vuint32 **M, int h, int w, float a0, float a1, flo
     db = (b1-b0)/h;
 
 #ifdef OPENMP
-	 #pragma omp parallel for schedule(static) private(a,b,iter) shared(M)	
+	 #pragma omp parallel for schedule(TYPE,BSIZE) private(a,b,iter) shared(M)	
 #endif   
 
     for(i=0; i<h; i++) {
@@ -337,7 +342,7 @@ void bench_mandelbrot_scalar(int n, int max_iter)
     
     DEBUG(convert_ui32matrix_ui8matrix(M32, 0, h-1, 0, w-1, M8));
     DEBUG(SavePGM_ui8matrix(M8, 0, h-1, 0, w-1, "M_scalar.pgm"));
-    
+   
     free_ui32matrix(M32, 0, h-1, 0, w-1);
     free_ui8matrix(M8, 0, h-1, 0, w-1);
 }
@@ -378,8 +383,8 @@ void bench_mandelbrot_SIMD(int n, int max_iter)
     CHRONO(calc_mandelbrot_SIMD_I32(M32, h, w, a0, a1, b0, b1, max_iter), cycles); // facultatif
     printf("SIMD I32: %10.2f\n\n", cycles/(n*n));
     
-    DEBUG(convert_ui32matrix_ui8matrix(wM32, 0, h-1, 0, w-1, M8));
-    DEBUG(SavePGM_ui8matrix(M8, 0, h-1, 0, w-1, "M_v.pgm"));
+    convert_ui32matrix_ui8matrix(wM32, 0, h-1, 0, w-1, M8);
+    SavePGM_ui8matrix(M8, 0, h-1, 0, w-1, "M_v.pgm");
     
     free_vui32matrix(M32, 0, h-1, 0, w/4-1);
     free_ui8matrix(M8, 0, h-1, 0, w-1);
@@ -395,9 +400,12 @@ int main_mandelbrot(int argc, char * argv[])
     test_mandelbrot_SIMD();
     
     n = 1000; max_iter = 256;
-    printf("n = %4d max_iter = %d\n", n, max_iter);
-    bench_mandelbrot_scalar(n, max_iter);
-    bench_mandelbrot_SIMD(n, max_iter);
+    for(int max_iter = 256; max_iter <= 1024; max_iter*=2) {
+		 printf("n = %4d max_iter = %d\n", n, max_iter);
+	 
+		 bench_mandelbrot_scalar(n, max_iter);
+		 bench_mandelbrot_SIMD(n, max_iter);
+	 }
     
     return 0;
 }

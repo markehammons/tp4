@@ -15,6 +15,12 @@
 #include <omp.h>
 #endif
 
+#ifndef TYPE
+#define TYPE static
+#define BSIZE 20
+#endif
+
+
 #include "def.h"
 #include "nrutil.h"
 
@@ -60,7 +66,7 @@ double integrale(int64 n)
 	double s = 0.0d;
 	double inv = 1/((double) n);	
 
-	#pragma omp parallel for schedule(static) reduction(+:s)		
+	#pragma omp parallel for schedule(TYPE,BSIZE) reduction(+:s)		
 	
 	for(int64 k = 0; k < n; ++k) {
 		double kn = k/((double) n);
@@ -83,7 +89,7 @@ double arctan1(int64 n)
 	 int chunk = n / 16;
 	 
 		 
-#pragma omp parallel for schedule(static) reduction(+:sum)		
+#pragma omp parallel for schedule(TYPE,BSIZE) reduction(+:sum)		
 	for(int k = 1; k < n+1; ++k)
 	{
 		double flip = (k & 1)*-2 + 1;
